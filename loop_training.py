@@ -15,7 +15,7 @@ batch_size = 180    #128
 # # os.system(f"python3 process_seg_data.py --obj_category {obj_category}")
 # os.system(f"python3 process_classifier_data2.py --obj_category {obj_category}")
 
-# os.system(f"python3 single_box_seg_trainer.py --obj_category {obj_category} --batch_size {batch_size}")
+# os.system(f"python3 dense_predictor_trainer.py --obj_category {obj_category} --batch_size {batch_size}")
 # os.system(f"python3 single_box_classifier_trainer.py --obj_category {obj_category} --batch_size {batch_size}")
 
 
