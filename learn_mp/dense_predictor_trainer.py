@@ -15,8 +15,8 @@ import socket
 
 # from architecture_seg import ManiPointSegment
 # from architecture_seg_2 import ManiPointSegment3 as ManiPointSegment
-from test_pointconv import ManiPointSegment
-from dataset_loader_single_box import ManiPointSegDataset
+from dense_predictor_pointconv_architecture import DensePredictor
+from dataset_loader_mani_point import DensePredictorDataset
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -37,7 +37,7 @@ def train(model, device, train_loader, optimizer, epoch):
         output = model(pc, pc_goal)
 
         loss = F.nll_loss(output, target)
-        # loss = F.nll_loss(output, target, weight=torch.FloatTensor([1,20]).to(device))
+        
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -50,7 +50,7 @@ def train(model, device, train_loader, optimizer, epoch):
               epoch, train_loss/num_batch))  
     logger.info('Train: Average loss: {:.6f}'.format(
               train_loss/num_batch))  
-    # writer.add_scalar('training loss', train_loss/num_batch, epoch)   
+
 
 
 
@@ -71,14 +71,10 @@ def test(model, device, test_loader, epoch):
             output = model(pc, pc_goal)
 
             test_loss += F.nll_loss(output, target, reduction='sum').item()
-            # test_loss += F.nll_loss(output, target, reduction='sum', weight=torch.FloatTensor([1,20]).to(device)).item()
 
             pred = output.argmax(dim=1, keepdim=True).squeeze()  # get the index of the max log-probability
-            # print((pred == target).shape)
             correct += torch.sum(pred == target)
-            # positive_correct +=  torch.sum(pred == 1 and target == 1) 
-            # correct += pred.eq(target.view_as(pred)).sum().item()            
-            # print(correct)
+
     test_loss /= len(test_loader.dataset)*1024
     # writer.add_scalar('test loss',test_loss, epoch)
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
@@ -101,7 +97,7 @@ def weights_init(m):
 
 
 if __name__ == "__main__":
-    # writer = SummaryWriter('runs/PointConv_method')
+
     parser = argparse.ArgumentParser(description=None)
     parser.add_argument('--obj_category', default="None", type=str, help="object category. Ex: boxes_10kPa")
     parser.add_argument('--batch_size', default=40, type=int, help="batch size for training and testing")
@@ -130,7 +126,7 @@ if __name__ == "__main__":
     test_len = round(len(os.listdir(dataset_path))*0.05)  
     total_len = train_len + test_len
 
-    dataset = ManiPointSegDataset(percentage = 1.0, dataset_path=dataset_path)
+    dataset = DensePredictorDataset(percentage = 1.0, dataset_path=dataset_path)
     train_dataset = torch.utils.data.Subset(dataset, range(0, train_len))
     test_dataset = torch.utils.data.Subset(dataset, range(train_len, total_len))
     
@@ -146,7 +142,7 @@ if __name__ == "__main__":
     logger.info(f"Data path: {dataset.dataset_path}\n") 
 
 
-    model = ManiPointSegment(num_classes=2).to(device)  # single robot
+    model = DensePredictor(num_classes=2).to(device)  # single robot
     # model = ManiPointSegment(num_classes=3).to(device)  # bimanual robot
     model.apply(weights_init)
     # model.load_state_dict(torch.load(os.path.join(weight_path, "epoch " + str(86))))

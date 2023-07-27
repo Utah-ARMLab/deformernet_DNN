@@ -63,8 +63,12 @@ class SingleBoxDataset(Dataset):
         return sample    
 
 
-class ManiPointSegDataset(Dataset):
-    """predict mani point using segmentation"""
+
+class DensePredictorDataset(Dataset):
+    
+    """
+    Dataset for dense predictor training. Predict manipulation point using segmentation network.
+    """
 
 
     def __init__(self, percentage = 1.0, dataset_path=None):

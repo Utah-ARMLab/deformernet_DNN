@@ -4,9 +4,14 @@ import torch.nn.functional as F
 from pointnet2_utils_groupnorm import PointNetSetAbstraction,PointNetFeaturePropagation
 from pointconv_util_groupnorm_2 import PointConvDensitySetAbstraction,PointConvFeaturePropagation
 
-class ManiPointSegment(nn.Module):
+class DensePredictor(nn.Module):
+    
+    """ 
+    Archiecture of the dense predictor. Predict manipulation point using segmentation network.
+    """
+    
     def __init__(self, num_classes, normal_channel=False):
-        super(ManiPointSegment, self).__init__()
+        super(DensePredictor, self).__init__()
         if normal_channel:
             additional_channel = 3
         else:
@@ -106,7 +111,7 @@ if __name__ == '__main__':
     pc = torch.randn((8,3,1024)).float().to(device)
     pc_goal = torch.randn((8,3,1024)).float().to(device)
     # labels = torch.randn((8,16)).float().to(device)
-    model = ManiPointSegment(num_classes).to(device)
+    model = DensePredictor(num_classes).to(device)
     # out = model(pc)
     out = model(pc, pc_goal)
     # #print(out[0].shape)   
