@@ -6,19 +6,23 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
+from itertools import product
+import random
 
 # import sys
 # sys.path.append("../")
 # from pointcloud_recon_2 import PointNetShapeServo3 as DeformerNet # original partial point cloud
 
 from bimanual_architecture import DeformerNetBimanualRot
-from dataset_loader import SingleBoxDataset
+from dataset_loader import SingleBoxDatasetAllObjects
 
 from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 import logging
 import socket
+import timeit
+
 
 def train(model, device, train_loader, optimizer, epoch):
     model.train()
@@ -42,7 +46,8 @@ def train(model, device, train_loader, optimizer, epoch):
         loss_rot_1 = model.compute_geodesic_loss(target_rot_mat_1, rot_mat_1)     
         loss_rot_2 = model.compute_geodesic_loss(target_rot_mat_2, rot_mat_2)
         
-        loss_rot = (loss_rot_1  + loss_rot_2)* 99 / 3.
+        # loss_rot = (loss_rot_1  + loss_rot_2) * 61.9  # make loss_pos = 3 * loss_rot
+        loss_rot = (loss_rot_1  + loss_rot_2) * 48  # make loss_pos = 3 * loss_rot
         
         loss = loss_pos + loss_rot 
         
@@ -53,11 +58,13 @@ def train(model, device, train_loader, optimizer, epoch):
         train_loss += loss.item()
         optimizer.step()
 
-        if batch_idx % 10 == 0:
+        if batch_idx % 100 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(sample), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
-            print("loss pos, loss rot, ratio:", int(loss_pos.detach().cpu().numpy()), int(loss_rot.detach().cpu().numpy()), loss_rot.detach().cpu().numpy()/loss_pos.detach().cpu().numpy())
+            print("loss pos, loss rot, ratio loss_rot/loss_pos:", int(loss_pos.detach().cpu().numpy()), 
+                  int(loss_rot.detach().cpu().numpy()), 
+                  loss_rot.detach().cpu().numpy()/loss_pos.detach().cpu().numpy())  # ratio should be ~= 1/3
             
             
     print('====> Epoch: {} Average loss: {:.6f}'.format(
@@ -110,14 +117,18 @@ def weights_init(m):
 
 
 if __name__ == "__main__":
-    # writer = SummaryWriter('runs/PointConv_method')
+    
+    use_mp_input = False
+
     parser = argparse.ArgumentParser(description=None)
 
-    parser.add_argument('--obj_category', default="None", type=str, help="object category. Ex: box_10kPa")
-    parser.add_argument('--batch_size', default=128, type=int, help="batch size for training and testing")
+    # parser.add_argument('--obj_category', default="None", type=str, help="object category. Ex: box_10kPa")
+    # parser.add_argument('--batch_size', default=128, type=int, help="batch size for training and testing")
     args = parser.parse_args()
+    args.batch_size = 180
+    
 
-    weight_path = f"/home/baothach/shape_servo_data/rotation_extension/bimanual/multi_{args.obj_category}/weights/run2"
+    weight_path = f"/home/baothach/shape_servo_data/rotation_extension/bimanual/all_objects/weights/run2(no_mp_input)"
     os.makedirs(weight_path, exist_ok=True)
 
     logger = logging.getLogger(weight_path)
@@ -131,15 +142,23 @@ if __name__ == "__main__":
     logger.info(f"Machine: {socket.gethostname()}")
 
     torch.manual_seed(2022)
+    random.seed(2022)
     device = torch.device("cuda")
 
+    prim_names = ["box", "cylinder", "hemis"]
+    stiffnesses = ["1k", "5k", "10k"]
+    object_names = [f"{prim_name}_{stiffness}Pa" for (prim_name, stiffness) in list(product(prim_names, stiffnesses))]
 
-    dataset_path = f"/home/baothach/shape_servo_data/rotation_extension/bimanual/multi_{args.obj_category}/processed_data"
-    train_len = round(len(os.listdir(dataset_path))*0.9)   #11000
-    test_len = round(len(os.listdir(dataset_path))*0.1)  #1000
+    dataset_path = f"/home/baothach/shape_servo_data/rotation_extension/bimanual"
+    dataset = SingleBoxDatasetAllObjects(dataset_path, object_names, use_mp_input)
+    
+    train_len = 50000   #round(len(dataset)*0.9)  
+    test_len = 1000     #round(len(dataset)*0.1)
     total_len = train_len + test_len
 
-    dataset = SingleBoxDataset(percentage = 1.0, dataset_path=dataset_path)
+
+    
+    
     train_dataset = torch.utils.data.Subset(dataset, range(0, train_len))
     test_dataset = torch.utils.data.Subset(dataset, range(train_len, total_len))
     
@@ -150,15 +169,18 @@ if __name__ == "__main__":
     print("training data: ", len(train_dataset))
     print("test data: ", len(test_dataset))
     print("data path:", dataset.dataset_path)
+    print("Using MP input: ", use_mp_input)
 
+    logger.info(f"\nObject list: {object_names}\n") 
     logger.info(f"Train len: {len(train_dataset)}")    
     logger.info(f"Test len: {len(test_dataset)}") 
     logger.info(f"Data path: {dataset.dataset_path}") 
+    logger.info(f"Using MP input: {use_mp_input}\n")
     
 
     # model = DeformerNetBimanual(normal_channel=False).to(device)
     # model = DeformerNetTube(normal_channel=False).to(device)
-    model = DeformerNetBimanualRot(normal_channel=False).to(device)
+    model = DeformerNetBimanualRot(normal_channel=False, use_mp_input=use_mp_input).to(device)
     model.apply(weights_init)
     
 
@@ -170,12 +192,18 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     scheduler = optim.lr_scheduler.StepLR(optimizer, scheduler_step, gamma=0.1)
     
+    start_time = timeit.default_timer()
     for epoch in range(0, num_epoch_total+1):
+        logger.info(f"\n")
         logger.info(f"Epoch {epoch}")
         logger.info(f"Lr: {optimizer.param_groups[0]['lr']}")
+        print(f"\n================ Epoch {epoch}")
+        print(f"Time passed: {(timeit.default_timer() - start_time)/60:.2f} mins\n")
+        logger.info(f"Time passed: {(timeit.default_timer() - start_time)/60:.2f} mins\n")
+
         train(model, device, train_loader, optimizer, epoch)
         scheduler.step()
         test(model, device, test_loader, epoch)
         
-        if epoch % 2 == 0:            
+        if epoch % 10 == 0:            
             torch.save(model.state_dict(), os.path.join(weight_path, "epoch " + str(epoch)))

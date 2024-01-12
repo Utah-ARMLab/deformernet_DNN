@@ -155,7 +155,7 @@ class DeformerNetBimanualRot(nn.Module):
     '''
     simpler archiecture
     '''
-    def __init__(self, normal_channel=False):
+    def __init__(self, normal_channel=False, use_mp_input=True):
         super(DeformerNetBimanualRot, self).__init__()
         
         if normal_channel:
@@ -163,7 +163,12 @@ class DeformerNetBimanualRot(nn.Module):
         else:
             additional_channel = 0
         self.normal_channel = normal_channel
-        self.sa1 = PointConvDensitySetAbstraction(npoint=512, nsample=32, in_channel=5+3+additional_channel, mlp=[64], bandwidth = 0.1, group_all=False)
+        
+        if use_mp_input: 
+            self.sa1 = PointConvDensitySetAbstraction(npoint=512, nsample=32, in_channel=5+3+additional_channel, mlp=[64], bandwidth = 0.1, group_all=False)
+        else:
+            self.sa1 = PointConvDensitySetAbstraction(npoint=512, nsample=32, in_channel=3+3+additional_channel, mlp=[64], bandwidth = 0.1, group_all=False)
+        
         self.sa2 = PointConvDensitySetAbstraction(npoint=128, nsample=64, in_channel=64 + 3, mlp=[128], bandwidth = 0.2, group_all=False)
         self.sa3 = PointConvDensitySetAbstraction(npoint=1, nsample=None, in_channel=128 + 3, mlp=[256], bandwidth = 0.4, group_all=True)
 

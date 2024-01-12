@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from pointnet2_utils_groupnorm import PointNetSetAbstraction,PointNetFeaturePropagation
+# from pointnet2_utils_groupnorm import PointNetSetAbstraction,PointNetFeaturePropagation
 from pointconv_util_groupnorm_2 import PointConvDensitySetAbstraction,PointConvFeaturePropagation
 
 class DensePredictor(nn.Module):
