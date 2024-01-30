@@ -6,7 +6,7 @@ from itertools import product
 
 start_time = timeit.default_timer()
 
-obj_category = "cylinder_1kPa"
+obj_category = "cylinder_10kPa"
 batch_size = 180    #128
 
 #### Train manipulation point
@@ -22,16 +22,16 @@ batch_size = 180    #128
 #### Train DeformerNet
 os.chdir("./rotation")
 
-# os.system(f"python3 resample_point_cloud.py --obj_category {obj_category}")
-# os.system(f"python3 add_mani_pt.py --obj_category {obj_category}")
+os.system(f"python3 resample_point_cloud.py --obj_category {obj_category}")
+os.system(f"python3 add_mani_pt.py --obj_category {obj_category}")
 
-# for option in [False, True]:
-for option in [True]:    
-    # os.system(f"python3 generalization_tasks/multi_hemis_trainer.py --use_mp_input {str(option)} \
-    #             --obj_category {obj_category} --batch_size {batch_size}") # w/o MP
+# # for option in [False, True]:
+# for option in [True]:    
+#     # os.system(f"python3 generalization_tasks/multi_hemis_trainer.py --use_mp_input {str(option)} \
+#     #             --obj_category {obj_category} --batch_size {batch_size}") # w/o MP
 
-    # os.system(f"python3 single_box_trainer.py --use_mp_input {str(option)} --obj_category {obj_category} --batch_size {batch_size}") # w MP
-    os.system(f"python3 rotation_trainer_modified_ratio.py --use_mp_input {str(option)} --obj_category {obj_category} --batch_size {batch_size}")
+#     # os.system(f"python3 single_box_trainer.py --use_mp_input {str(option)} --obj_category {obj_category} --batch_size {batch_size}") # w MP
+#     os.system(f"python3 rotation_trainer_modified_ratio.py --use_mp_input {str(option)} --obj_category {obj_category} --batch_size {batch_size}")
 
 
 # ### Train bimanual

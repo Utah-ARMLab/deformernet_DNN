@@ -18,10 +18,10 @@ parser = argparse.ArgumentParser(description=None)
 parser.add_argument('--obj_category', default="None", type=str, help="object category. Ex: boxes_10kPa")
 args = parser.parse_args()
 
-# data_recording_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/processed_data"
-# data_processed_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/processed_data_w_mp"
-data_recording_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_10kPa_processed_data"
-data_processed_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_10kPa_processed_data_w_mp"
+data_recording_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/processed_data"
+data_processed_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/processed_data_w_mp"
+# data_recording_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_10kPa_processed_data"
+# data_processed_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_10kPa_processed_data_w_mp"
 os.makedirs(data_processed_path, exist_ok=True)
 
 start_time = timeit.default_timer() 

@@ -125,11 +125,11 @@ if __name__ == "__main__":
 
     use_mp_input = args.use_mp_input == "True"
 
-    # if use_mp_input:
-    #     weight_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/weights/run1_w_rot_w_MP/"
-    # else:
-    #     weight_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/weights/run1_w_rot_no_MP/"
-    weight_path = "/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/weights/thin_cylinder"
+    if use_mp_input:
+        weight_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/weights/run1_w_rot_w_MP/"
+    else:
+        weight_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/weights/run1_w_rot_no_MP/"
+    # weight_path = "/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/weights/thin_cylinder"
     os.makedirs(weight_path, exist_ok=True)
     
 
@@ -147,8 +147,8 @@ if __name__ == "__main__":
     torch.manual_seed(2021)
     device = torch.device("cuda")
     
-    # dataset_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/processed_data_w_mp"
-    dataset_path = "/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_10kPa_processed_data_w_mp"
+    dataset_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/processed_data_w_mp"
+    # dataset_path = "/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_10kPa_processed_data_w_mp"
     train_len = round(len(os.listdir(dataset_path))*0.9)   #11000
     test_len = round(len(os.listdir(dataset_path))*0.1)  #1000
     total_len = train_len + test_len

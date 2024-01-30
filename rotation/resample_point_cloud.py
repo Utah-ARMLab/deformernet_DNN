@@ -14,15 +14,15 @@ parser.add_argument('--obj_category', default="None", type=str, help="object cat
 args = parser.parse_args()
 
 
-# data_recording_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/data"
-# data_processed_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/processed_data"
-data_recording_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_data_on_ground"
-data_processed_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_10kPa_processed_data"
+data_recording_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/data"
+data_processed_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_{args.obj_category}/processed_data"
+# data_recording_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_data_on_ground"
+# data_processed_path = f"/home/baothach/shape_servo_data/rotation_extension/multi_cylinder_10kPa/single_thin_cylinder_10kPa_processed_data"
 os.makedirs(data_processed_path, exist_ok=True)
 
 start_time = timeit.default_timer() 
 
-start_index = 500
+start_index = 0
 max_len_data = 16000
 
 for i in range(start_index, max_len_data):
