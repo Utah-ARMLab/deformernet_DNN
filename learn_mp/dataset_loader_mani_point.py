@@ -10,7 +10,19 @@ import sklearn
 from farthest_point_sampling import *
 
                        
-
+# import open3d
+# def pcd_ize(pc, color=None, vis=False):
+#     """ 
+#     Convert point cloud numpy array to an open3d object (usually for visualization purpose).
+#     """
+#     import open3d
+#     pcd = open3d.geometry.PointCloud()
+#     pcd.points = open3d.utility.Vector3dVector(pc)   
+#     if color is not None:
+#         pcd.paint_uniform_color(color) 
+#     if vis:
+#         open3d.visualization.draw_geometries([pcd])
+#     return pcd
 
 
 class SingleBoxDataset(Dataset):
@@ -71,7 +83,7 @@ class DensePredictorDataset(Dataset):
     """
 
 
-    def __init__(self, percentage = 1.0, dataset_path=None):
+    def __init__(self, percentage = 1.0, dataset_path=None, shift_to_centroid=False):
         """
         Args:
 
@@ -97,6 +109,9 @@ class DensePredictorDataset(Dataset):
         # pcd = open3d.io.read_point_cloud("/home/baothach/shape_servo_data/manipulation_points/box/init_box_pc.pcd")    
         # pc = down_sampling(np.asarray(pcd.points))
         # self.pc_tensor = torch.from_numpy(pc).permute(1,0).float()
+        
+        self.shift_to_centroid = shift_to_centroid
+        
 
     def load_pickle_data(self, filename):
         if os.path.getsize(os.path.join(self.dataset_path, filename)) == 0: 
@@ -112,6 +127,17 @@ class DensePredictorDataset(Dataset):
 
         pc = torch.tensor(sample["partial pcs"][0]).float() 
         pc_goal = torch.tensor(sample["partial pcs"][1]).float()    
+
+        if self.shift_to_centroid:
+            shift = torch.FloatTensor([[0], [0.42], [-0.01]])
+            pc += shift
+            pc_goal += shift
+
+        # coor = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.05)
+        # pcd = pcd_ize(pc[:3,:].transpose(1,0), color=[0,0,0])
+        # pcd_goal = pcd_ize(pc_goal.transpose(1,0), color=[1,0,0])
+        # open3d.visualization.draw_geometries([pcd, pcd_goal, coor])
+
         
         label = torch.tensor(sample["mp_labels"]).long()
 

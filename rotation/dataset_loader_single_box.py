@@ -8,7 +8,19 @@ import pickle
 # import open3d
 # import sklearn
 
-
+# import open3d
+# def pcd_ize(pc, color=None, vis=False):
+#     """ 
+#     Convert point cloud numpy array to an open3d object (usually for visualization purpose).
+#     """
+#     import open3d
+#     pcd = open3d.geometry.PointCloud()
+#     pcd.points = open3d.utility.Vector3dVector(pc)   
+#     if color is not None:
+#         pcd.paint_uniform_color(color) 
+#     if vis:
+#         open3d.visualization.draw_geometries([pcd])
+#     return pcd
 
 class SingleBoxDataset(Dataset):
     """Shape servo dataset."""
@@ -16,7 +28,7 @@ class SingleBoxDataset(Dataset):
     Dataset for surgical setup task
     '''
 
-    def __init__(self, percentage = 1.0, use_mp_input=True, dataset_path=None):
+    def __init__(self, percentage = 1.0, use_mp_input=True, dataset_path=None, shift_to_centroid=False):
         """
         Args:
 
@@ -39,6 +51,7 @@ class SingleBoxDataset(Dataset):
             self.filenames = os.listdir(self.dataset_path)[:int(percentage*len(self.filenames))]
  
         self.use_mp_input = use_mp_input
+        self.shift_to_centroid = shift_to_centroid
 
     
     def load_pickle_data(self, filename):
@@ -61,6 +74,18 @@ class SingleBoxDataset(Dataset):
         
         pc_goal = torch.tensor(sample["partial pcs"][1]).float()      
         # print("pc.shape:", pc.shape)
+        
+        if self.shift_to_centroid:
+            shift = torch.FloatTensor([[0], [0.42], [-0.01]])
+            pc[:3,:] += shift
+            pc_goal += shift
+
+
+        # coor = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.05)
+        # pcd = pcd_ize(pc[:3,:].transpose(1,0), color=[0,0,0])
+        # pcd_goal = pcd_ize(pc_goal.transpose(1,0), color=[1,0,0])
+        # open3d.visualization.draw_geometries([pcd, pcd_goal, coor])
+
 
         position = (torch.tensor(sample["pos"])*1000).squeeze().float()
         rot_mat = torch.tensor(sample["rot"]).float()
