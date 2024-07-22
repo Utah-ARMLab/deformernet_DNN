@@ -9,12 +9,15 @@ import argparse
 
 
 parser = argparse.ArgumentParser(description=None)
-parser.add_argument('--obj_category', default="None", type=str, help="object category. Ex: boxes_1kPa")
+parser.add_argument(
+    "--obj_category", default="None", type=str, help="object category. Ex: boxes_1kPa"
+)
 args = parser.parse_args()
 
+
 def down_sampling(pc):
-    farthest_indices,_ = farthest_point_sampling(pc, 1024)
-    pc = pc[farthest_indices.squeeze()]  
+    farthest_indices, _ = farthest_point_sampling(pc, 1024)
+    pc = pc[farthest_indices.squeeze()]
     return pc
 
 
@@ -22,24 +25,25 @@ data_recording_path = f"/home/baothach/shape_servo_data/manipulation_points/mult
 data_processed_path = f"/home/baothach/shape_servo_data/manipulation_points/multi_{args.obj_category}/processed_seg_data"
 os.makedirs(data_processed_path, exist_ok=True)
 
-start_time = timeit.default_timer() 
+start_time = timeit.default_timer()
 visualization = False
 
 file_names = sorted(os.listdir(data_recording_path))
 
 
-
 for i in range(0, 10000):
     if i % 50 == 0:
-        print("current count:", i, " , time passed:", timeit.default_timer() - start_time)
-    
+        print(
+            "current count:", i, " , time passed:", timeit.default_timer() - start_time
+        )
+
     file_name = os.path.join(data_recording_path, file_names[i])
 
     if not os.path.isfile(file_name):
         print(f"{file_name} not found")
-        continue      
+        continue
 
-    with open(file_name, 'rb') as handle:
+    with open(file_name, "rb") as handle:
         data = pickle.load(handle)
 
     ### Down-sample point clouds
@@ -52,28 +56,34 @@ for i in range(0, 10000):
     neigh.fit(pc_resampled)
     _, nearest_idxs = neigh.kneighbors(mp_pos.reshape(1, -1))
     mp_channel = np.zeros(pc_resampled.shape[0])
-    mp_channel[nearest_idxs.flatten()] = 1  # shape (num_points,). Get value of 1 at the 50 nearest point, value of 0 elsewhere. 
-    
+    mp_channel[
+        nearest_idxs.flatten()
+    ] = 1  # shape (num_points,). Get value of 1 at the 50 nearest point, value of 0 elsewhere.
 
     if visualization:
         pcd_goal = open3d.geometry.PointCloud()
         pcd_goal.points = open3d.utility.Vector3dVector(np.array(pc_goal_resampled))
         pcd = open3d.geometry.PointCloud()
         pcd.points = open3d.utility.Vector3dVector(np.array(pc_resampled))
-        colors = np.zeros((1024,3))
-        colors[nearest_idxs.flatten()] = [1,0,0]
-        pcd.colors =  open3d.utility.Vector3dVector(colors)
+        colors = np.zeros((1024, 3))
+        colors[nearest_idxs.flatten()] = [1, 0, 0]
+        pcd.colors = open3d.utility.Vector3dVector(colors)
         mani_point = open3d.geometry.TriangleMesh.create_sphere(radius=0.01)
-        mani_point.paint_uniform_color([0,0,1])
-        # open3d.visualization.draw_geometries([pcd, mani_point.translate(tuple(mp_pos))]) 
-        open3d.visualization.draw_geometries([pcd, pcd_goal.translate((0.2,0,0)), mani_point.translate(tuple(mp_pos))]) 
+        mani_point.paint_uniform_color([0, 0, 1])
+        # open3d.visualization.draw_geometries([pcd, mani_point.translate(tuple(mp_pos))])
+        open3d.visualization.draw_geometries(
+            [pcd, pcd_goal.translate((0.2, 0, 0)), mani_point.translate(tuple(mp_pos))]
+        )
 
-
-    pcs = (np.transpose(pc_resampled, (1, 0)), np.transpose(pc_goal_resampled, (1, 0)))     # pcs[0] and pcs[1] shape: (3, num_points)
-    processed_data = {"partial pcs": pcs, "mp_labels": mp_channel, \
-                       "mani_point": data["mani_point"], "obj_name": data["obj_name"]} 
-    with open(os.path.join(data_processed_path, file_names[i]), 'wb') as handle:
-        pickle.dump(processed_data, handle, protocol=pickle.HIGHEST_PROTOCOL) 
-
-
-
+    pcs = (
+        np.transpose(pc_resampled, (1, 0)),
+        np.transpose(pc_goal_resampled, (1, 0)),
+    )  # pcs[0] and pcs[1] shape: (3, num_points)
+    processed_data = {
+        "partial pcs": pcs,
+        "mp_labels": mp_channel,
+        "mani_point": data["mani_point"],
+        "obj_name": data["obj_name"],
+    }
+    with open(os.path.join(data_processed_path, file_names[i]), "wb") as handle:
+        pickle.dump(processed_data, handle, protocol=pickle.HIGHEST_PROTOCOL)

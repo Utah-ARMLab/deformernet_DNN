@@ -12,9 +12,15 @@ def l2_norm(x, y):
     return ((x - y) ** 2).sum(axis=2)
 
 
-def farthest_point_sampling(pts, k, initial_idx=None, metrics=l2_norm,
-                            skip_initial=False, indices_dtype=numpy.int32,
-                            distances_dtype=numpy.float32):
+def farthest_point_sampling(
+    pts,
+    k,
+    initial_idx=None,
+    metrics=l2_norm,
+    skip_initial=False,
+    indices_dtype=numpy.int32,
+    distances_dtype=numpy.float32,
+):
     """Batch operation of farthest point sampling
     Code referenced from below link by @Graipher
     https://codereview.stackexchange.com/questions/179561/farthest-point-algorithm-in-python
@@ -47,7 +53,13 @@ def farthest_point_sampling(pts, k, initial_idx=None, metrics=l2_norm,
     assert pts.ndim == 3
     xp = cuda.get_array_module(pts)
     batch_size, num_point, coord_dim = pts.shape
-    indices = xp.zeros((batch_size, k, ), dtype=indices_dtype)
+    indices = xp.zeros(
+        (
+            batch_size,
+            k,
+        ),
+        dtype=indices_dtype,
+    )
 
     # distances[bs, i, j] is distance between i-th farthest point `pts[bs, i]`
     # and j-th input point `pts[bs, j]`.
@@ -63,7 +75,9 @@ def farthest_point_sampling(pts, k, initial_idx=None, metrics=l2_norm,
     try:
         min_distances = metrics(farthest_point[:, None, :], pts)
     except Exception as e:
-        import IPython; IPython.embed()
+        import IPython
+
+        IPython.embed()
 
     if skip_initial:
         # Override 0-th `indices` by the farthest point of `initial_idx`
@@ -81,7 +95,7 @@ def farthest_point_sampling(pts, k, initial_idx=None, metrics=l2_norm,
     return indices, distances
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # when num_point = 10000 & k = 1000 & batch_size = 32,
     # CPU takes 6 sec, GPU takes 0.5 sec.
 
@@ -93,7 +107,7 @@ if __name__ == '__main__':
         t0 = time()
         yield
         t1 = time()
-        print('[{}] done in {:.3f} s'.format(name, t1-t0))
+        print("[{}] done in {:.3f} s".format(name, t1 - t0))
 
     # batch_size = 32
     # num_point = 10000
@@ -107,51 +121,60 @@ if __name__ == '__main__':
     do_plot = True
 
     device = -1
-    print('num_point', num_point, 'device', device)
+    print("num_point", num_point, "device", device)
     if device == -1:
         pts = numpy.random.uniform(0, 1, (batch_size, num_point, coord_dim))
     else:
         import cupy
+
         pts = cupy.random.uniform(0, 1, (batch_size, num_point, coord_dim))
 
-    with timer('1st'):
+    with timer("1st"):
         farthest_indices, distances = farthest_point_sampling(pts, k)
 
-    with timer('2nd'):  # time measuring twice.
+    with timer("2nd"):  # time measuring twice.
         farthest_indices, distances = farthest_point_sampling(pts, k)
 
-    with timer('3rd'):  # time measuring twice.
-        farthest_indices, distances = farthest_point_sampling(
-            pts, k, skip_initial=True)
+    with timer("3rd"):  # time measuring twice.
+        farthest_indices, distances = farthest_point_sampling(pts, k, skip_initial=True)
 
     # with timer('gpu'):
     #     farthest_indices = farthest_point_sampling_gpu(pts, k)
-    print('farthest_indices', farthest_indices.shape, type(farthest_indices))
+    print("farthest_indices", farthest_indices.shape, type(farthest_indices))
 
     if do_plot:
         import matplotlib
-        matplotlib.use('Agg')
+
+        matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         import os
+
         pts = cuda.to_cpu(pts)
         farthest_indices = cuda.to_cpu(farthest_indices)
-        if not os.path.exists('results'):
-            os.mkdir('results')
+        if not os.path.exists("results"):
+            os.mkdir("results")
         for index in range(batch_size):
             fig, ax = plt.subplots()
             plt.grid(False)
-            plt.scatter(pts[index, :, 0], pts[index, :, 1], c='k', s=4)
-            plt.scatter(pts[index, farthest_indices[index], 0], pts[index, farthest_indices[index], 1], c='r', s=4)
+            plt.scatter(pts[index, :, 0], pts[index, :, 1], c="k", s=4)
+            plt.scatter(
+                pts[index, farthest_indices[index], 0],
+                pts[index, farthest_indices[index], 1],
+                c="r",
+                s=4,
+            )
             # plt.show()
-            plt.savefig('results/farthest_point_sampling_{}.png'.format(index))
+            plt.savefig("results/farthest_point_sampling_{}.png".format(index))
 
         # --- To extract farthest_points, you can use this kind of advanced indexing ---
-        farthest_points = pts[numpy.arange(batch_size)[:, None],
-                          farthest_indices, :]
-        print('farthest_points', farthest_points.shape)
+        farthest_points = pts[numpy.arange(batch_size)[:, None], farthest_indices, :]
+        print("farthest_points", farthest_points.shape)
         for index in range(batch_size):
             farthest_pts_index = pts[index, farthest_indices[index], :]
-            print('farthest', farthest_points[index].shape,
-                  farthest_pts_index.shape,
-                  numpy.sum(farthest_points[index] - farthest_pts_index))
+            print(
+                "farthest",
+                farthest_points[index].shape,
+                farthest_pts_index.shape,
+                numpy.sum(farthest_points[index] - farthest_pts_index),
+            )
             assert numpy.allclose(farthest_points[index], farthest_pts_index)

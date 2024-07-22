@@ -18,16 +18,15 @@ max_len_data = 13000
 for i in range(start_index, max_len_data):
     file_name = os.path.join(data_recording_path, "mp sample " + str(i) + ".pickle")
     if not os.path.isfile(file_name):
-        continue     
-    with open(file_name, 'rb') as handle:
+        continue
+    with open(file_name, "rb") as handle:
         data = pickle.load(handle)
-    datas.append(abs(data['twist']))
+    datas.append(abs(data["twist"]))
 
 datas = np.array(datas).squeeze()
 print(datas.shape)
 # pos = datas[:,3:]
-print("mean:", np.mean(datas, axis=0)) 
-print("max:", np.max(datas, axis=0)) 
-print("min:", np.min(datas, axis=0)) 
-print("std:", np.std(datas, axis=0)) 
-
+print("mean:", np.mean(datas, axis=0))
+print("max:", np.max(datas, axis=0))
+print("min:", np.min(datas, axis=0))
+print("std:", np.std(datas, axis=0))
